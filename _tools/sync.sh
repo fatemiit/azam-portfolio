@@ -6,8 +6,11 @@ ROOT=$(pwd)
 DOMAIN=$( [ -f "$ROOT/CNAME" ] && tr -d '[:space:]' < "$ROOT/CNAME" || true )
 TMP=$(mktemp -d)
 curl -sS "$SRC/sitemap.xml" -o "$TMP/sitemap.xml"
-grep -o '<loc>[^<]*' "$TMP/sitemap.xml" | sed 's#<loc>##' | while read -r url; do
-  p=${url#"$SRC"}; p=${p#/}
+# Framer's sitemap may list the primary host (e.g. *.framer.app), not $SRC
+ORIGIN=$(grep -o '<loc>[^<]*' "$TMP/sitemap.xml" | head -1 | sed -E 's#<loc>(https?://[^/]+).*#\1#')
+grep -o '<loc>[^<]*' "$TMP/sitemap.xml" | sed 's#<loc>##' | while read -r loc; do
+  p=$(echo "$loc" | sed -E 's#^https?://[^/]+/?##')
+  url="$SRC/$p"
   mkdir -p "$TMP/site/$p"
   for i in 1 2 3; do
     curl -sS "$url" -o "$TMP/site/$p/index.html"
@@ -16,9 +19,10 @@ grep -o '<loc>[^<]*' "$TMP/sitemap.xml" | sed 's#<loc>##' | while read -r url; d
   done
   echo "fetched /$p ($(stat -c%s "$TMP/site/$p/index.html") bytes)"
 done
-python3 -I "$ROOT/_tools/process.py" "$TMP/site" "$DOMAIN" "$SRC" >/dev/null
+python3 -I "$ROOT/_tools/process.py" "$TMP/site" "$DOMAIN" "$ORIGIN" >/dev/null
 if [ -n "$DOMAIN" ]; then
-  sed "s#$SRC#https://$DOMAIN#g" "$TMP/sitemap.xml" > "$TMP/site/sitemap.xml"
+  python3 -I "$ROOT/_tools/process.py" "$TMP/site" "$DOMAIN" "$SRC" >/dev/null
+  sed -e "s#$ORIGIN#https://$DOMAIN#g" -e "s#$SRC#https://$DOMAIN#g" "$TMP/sitemap.xml" > "$TMP/site/sitemap.xml"
   printf 'User-agent: *\nAllow: /\nSitemap: https://%s/sitemap.xml\n' "$DOMAIN" > "$TMP/site/robots.txt"
 fi
 cp "$TMP/site/index.html" "$TMP/site/404.html"
