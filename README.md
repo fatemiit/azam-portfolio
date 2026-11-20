@@ -1,36 +1,21 @@
 # Azam Esmaeili — Portfolio
 
-Product designer portfolio. The site is designed and edited in **Framer** and published at
-https://azamesmaili.framer.website.
+Static export of the Framer site published at https://azamesmaili.framer.website,
+served by GitHub Pages. Framer is the source of truth; this repo is the hosting copy.
 
-This repo mirrors that published site to **GitHub Pages**, so it can run on a custom domain
-without a paid Framer plan.
+## Updating after a Framer change
 
-## How it works
+1. Publish in Framer.
+2. Either run `bash _tools/sync.sh` locally and commit, or open **Actions → Sync from Framer → Run workflow**.
+   The workflow also runs once a day on its own.
 
-- `.github/workflows/deploy.yml` downloads every page of the Framer site and deploys it to GitHub Pages.
-- It runs on every push to `main`, once a day, and on demand (Actions → *Mirror Framer site* → *Run workflow*).
-- Images, fonts and scripts still load from Framer's CDN, so the mirror looks and behaves like the original.
-
-**To update the site:** edit and publish in Framer, then run the workflow (or wait for the daily run).
-
-**Adding a page in Framer:** add its path to the `for path in ...` list in the workflow.
+`sync.sh` reads the Framer sitemap, so new pages are picked up automatically.
 
 ## Connecting a custom domain
 
-1. Add a file named `CNAME` at the repo root containing only the domain, e.g. `azamesmaili.com`.
-2. At the domain registrar, add DNS records:
-   - Apex domain (`azamesmaili.com`): four `A` records → `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`
-   - `www`: a `CNAME` record → `<github-username>.github.io`
-3. Repo Settings → Pages → Custom domain → enter the domain → tick **Enforce HTTPS** once the certificate is ready.
-
-## Pages
-
-| Path | Page |
-|---|---|
-| `/` | Home |
-| `/case-studies` | Case studies |
-| `/case-studies/okala-out-of-stock` | Okala case study |
-| `/case-studies/nobitex-shortcuts` | Nobitex case study |
-| `/experience` | Experience |
-| `/about` | About |
+1. Add a `CNAME` file at the repo root containing only the domain, e.g. `azamesmaili.com`, then run the sync
+   (it rewrites canonical URLs, sitemap and robots.txt to that domain).
+2. DNS at the registrar:
+   - Apex: four `A` records → `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`
+   - `www`: `CNAME` → `<github-username>.github.io`
+3. Settings → Pages → Custom domain → enter it → **Enforce HTTPS**.
